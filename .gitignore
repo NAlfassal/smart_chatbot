@@ -1,0 +1,15 @@
+# Virtual Environment
+venv/
+.env
+
+# Databases / caches
+chroma_db/
+.gradio/
+
+# Torch wheel (local installation files)
+torch-*.whl
+
+# Python cache
+__pycache__/
+*.pyc
+.DS_Store
