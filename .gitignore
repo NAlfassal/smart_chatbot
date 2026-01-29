@@ -10,6 +10,10 @@ chroma_db/
 torch-*.whl
 
 # Python cache
+.venv/
 __pycache__/
 *.pyc
-.DS_Store
+chroma_db/
+knowledge/
+.gradio/
+.env
