@@ -1,19 +1,15 @@
 # Virtual Environment
+.venv/
 venv/
 .env
 
-# Databases / caches
+# Databases / caches 
 chroma_db/
 .gradio/
-
-# Torch wheel (local installation files)
-torch-*.whl
 
 # Python cache
-.venv/
 __pycache__/
 *.pyc
-chroma_db/
-knowledge/
-.gradio/
-.env
+
+# Torch / local wheels
+torch-*.whl

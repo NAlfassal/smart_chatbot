@@ -12,12 +12,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CHROMA_PATH = os.path.join(BASE_DIR, "chroma_db")
 COLLECTION_NAME = "sfda_collection"
 
-# ✳️ غيّري اسم ملف الـ JSON هنا
-JSON_PATH = os.path.join(BASE_DIR, "sfda_articles.json")  # أو اسم ملفك
+
+JSON_PATH = os.path.join(BASE_DIR, "sfda_articles.json")  
 
 
 def normalize_source_name(name: str) -> str:
-    # يزيل الشرطات من اسم المصدر لو تبين
+   
     s = str(name or "").strip()
     s = s.replace("-", " ")
     s = re.sub(r"\s{2,}", " ", s)
