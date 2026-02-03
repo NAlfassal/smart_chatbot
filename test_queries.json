@@ -1,0 +1,107 @@
+[
+  {
+    "query": "ما هي المادة الرابعة؟",
+    "expected_articles": ["4"],
+    "source_choice": "لوائح التجميل (PDF)",
+    "category": "specific_article",
+    "description": "Direct article lookup"
+  },
+  {
+    "query": "ما نص المادة السابعة؟",
+    "expected_articles": ["7"],
+    "source_choice": "لوائح التجميل (PDF)",
+    "category": "specific_article",
+    "description": "Article lookup with Arabic number"
+  },
+  {
+    "query": "اذكر التزامات المُدرج في النظام",
+    "expected_articles": ["5", "6", "7"],
+    "source_choice": "لوائح التجميل (PDF)",
+    "category": "general_regulation",
+    "description": "General regulatory obligations"
+  },
+  {
+    "query": "ما هي متطلبات التسجيل لمنتجات التجميل؟",
+    "expected_articles": ["3", "4", "5"],
+    "source_choice": "لوائح التجميل (PDF)",
+    "category": "general_regulation",
+    "description": "Registration requirements"
+  },
+  {
+    "query": "ما هي العقوبات المنصوص عليها في اللائحة؟",
+    "expected_articles": ["20", "21"],
+    "source_choice": "لوائح التجميل (PDF)",
+    "category": "penalties",
+    "description": "Penalties and violations"
+  },
+  {
+    "query": "هل Mercury محظور في منتجات التجميل؟",
+    "expected_articles": [],
+    "source_choice": "محظورات التجميل",
+    "category": "banned_substance",
+    "description": "Checking if Mercury is banned"
+  },
+  {
+    "query": "اذكر 5 مواد محظورة تبدأ بحرف M",
+    "expected_articles": [],
+    "source_choice": "محظورات التجميل",
+    "category": "banned_list",
+    "description": "List banned substances starting with M"
+  },
+  {
+    "query": "ما هي المواد المقيدة الاستخدام في التجميل؟",
+    "expected_articles": [],
+    "source_choice": "محظورات التجميل",
+    "category": "restricted_substances",
+    "description": "Restricted substances inquiry"
+  },
+  {
+    "query": "هل يسمح باستخدام Formaldehyde في منتجات التجميل؟",
+    "expected_articles": [],
+    "source_choice": "محظورات التجميل",
+    "category": "substance_inquiry",
+    "description": "Formaldehyde usage permission"
+  },
+  {
+    "query": "ما هي اشتراطات وضع البيانات على منتجات التجميل؟",
+    "expected_articles": ["8", "9"],
+    "source_choice": "لوائح التجميل (PDF)",
+    "category": "labeling",
+    "description": "Labeling requirements"
+  },
+  {
+    "query": "من هي الجهة المسؤولة عن الرقابة على منتجات التجميل؟",
+    "expected_articles": ["1", "2"],
+    "source_choice": "لوائح التجميل (PDF)",
+    "category": "authority",
+    "description": "Regulatory authority"
+  },
+  {
+    "query": "ما هي إجراءات سحب المنتج من السوق؟",
+    "expected_articles": ["15", "16"],
+    "source_choice": "لوائح التجميل (PDF)",
+    "category": "recall_procedures",
+    "description": "Product recall procedures"
+  },
+  {
+    "query": "هل Lead محظور في منتجات العناية بالبشرة؟",
+    "expected_articles": [],
+    "source_choice": "محظورات التجميل",
+    "category": "banned_substance",
+    "description": "Lead ban inquiry"
+  },
+  {
+    "query": "ما هي مدة صلاحية التسجيل؟",
+    "expected_articles": ["6"],
+    "source_choice": "لوائح التجميل (PDF)",
+    "category": "registration_validity",
+    "description": "Registration validity period"
+  },
+  {
+    "query": "اذكر مواد محظورة تحتوي على معادن ثقيلة",
+    "expected_articles": [],
+    "source_choice": "محظورات التجميل",
+    "category": "heavy_metals",
+    "description": "Heavy metals ban"
+  }
+]
