@@ -1,8 +1,12 @@
 """
 Improved Gradio Application for SFDA Cosmetics Chatbot.
 
-This module provides a web interface for querying SFDA cosmetics regulations
-and banned substances using a RAG (Retrieval Augmented Generation) approach.
+واجهة استعلام عن:
+- لوائح التجميل (PDF)       category=regulation
+- محظورات التجميل          category=banned
+- الأسس (GDP)              category=gdp
+
+باستخدام RAG (Retrieval Augmented Generation)
 """
 
 import os
@@ -19,18 +23,22 @@ from langchain_core.messages import HumanMessage
 
 import config
 
-# Configure logging
+# ---------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------
 logging.basicConfig(
-    level=logging.INFO if config.DEBUG else logging.WARNING,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO if getattr(config, "DEBUG", False) else logging.WARNING,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------
 class ArabicArticleParser:
     """Handles parsing and conversion of Arabic article numbers."""
 
-    # Arabic word to number mappings
     AR_WORD_TO_NUM = {
         "الأولى": "1", "الاولى": "1",
         "الثانية": "2",
@@ -66,15 +74,6 @@ class ArabicArticleParser:
 
     @classmethod
     def normalize_article_to_num(cls, article_value: str) -> Optional[str]:
-        """
-        Convert Arabic article name to number.
-
-        Args:
-            article_value: Arabic article text
-
-        Returns:
-            Article number as string, or None if not found
-        """
         if article_value is None:
             return None
 
@@ -83,15 +82,12 @@ class ArabicArticleParser:
         s = re.sub(r"\s{2,}", " ", s)
         s = re.sub(r"^\s*المادة\s+", "", s).strip()
 
-        # Check if already numeric
         if re.fullmatch(r"\d+", s):
             return s
 
-        # Direct lookup
         if s in cls.AR_WORD_TO_NUM:
             return cls.AR_WORD_TO_NUM[s]
 
-        # Try partial matches
         words = s.split()
         for n in (4, 3, 2, 1):
             if len(words) >= n:
@@ -102,23 +98,12 @@ class ArabicArticleParser:
 
     @classmethod
     def extract_article_number(cls, text: str) -> Optional[str]:
-        """
-        Extract article number from user query.
-
-        Args:
-            text: User query text
-
-        Returns:
-            Article number if found, None otherwise
-        """
         text = text or ""
 
-        # Try numeric pattern first
         m = re.search(r"المادة\s+(\d+)", text)
         if m:
             return m.group(1)
 
-        # Try text pattern
         m = re.search(r"المادة\s+([^\n،,.؟!]+)", text)
         if not m:
             return None
@@ -126,11 +111,9 @@ class ArabicArticleParser:
         phrase = re.sub(r"\s{2,}", " ", m.group(1).replace("ـ", "")).strip()
         phrase = re.sub(r"^\s*المادة\s+", "", phrase).strip()
 
-        # Direct lookup
         if phrase in cls.AR_WORD_TO_NUM:
             return cls.AR_WORD_TO_NUM[phrase]
 
-        # Try partial matches
         words = phrase.split()
         for n in (4, 3, 2, 1):
             if len(words) >= n:
@@ -145,12 +128,10 @@ class TextFormatter:
 
     @staticmethod
     def clean_repeated_characters(text: str) -> str:
-        """Remove excessive character repetition."""
         return re.sub(r"(.)\1{2,}", r"\1", text or "")
 
     @staticmethod
     def merge_spaced_arabic_letters(text: str) -> str:
-        """Merge Arabic letters that are incorrectly spaced."""
         if not text:
             return ""
         t = text
@@ -164,7 +145,6 @@ class TextFormatter:
 
     @staticmethod
     def pretty_arabic_text(text: str) -> str:
-        """Format Arabic text for better display."""
         if not text:
             return ""
         t = TextFormatter.merge_spaced_arabic_letters(text)
@@ -176,51 +156,31 @@ class TextFormatter:
 
 
 class SourceDisplayManager:
-    """Manages display names for document sources."""
+    """Display sources based on metadata category (NOT filename)."""
 
     @staticmethod
-    def display_source_name(raw_source: str) -> str:
-        """
-        Convert raw source file name to display name.
+    def display_source_name_from_doc(doc: Document) -> str:
+        cat = (doc.metadata.get("category") or "").lower().strip()
 
-        Args:
-            raw_source: Raw source file name
-
-        Returns:
-            Formatted display name
-        """
-        s = os.path.basename(raw_source or "N/A").strip()
-        s_lower = s.lower()
-
-        if "banned_list" in s_lower or "محظور" in s or "قائمة شاملة بالمواد المحظورة" in s:
+        if cat == "banned":
             return "محظورات التجميل"
-
-        if "اللائحة" in s or "نظام منتجات التجميل" in s or "sfda_articles" in s_lower:
+        if cat == "regulation":
             return "لوائح التجميل"
+        if cat in ("gdp", "guidelines", "gdp_guidelines"):
+            return "الأسس (التوزيع والتخزين الجيدة)"
 
-        return "مصادر إضافية"
+        raw = doc.metadata.get("source", doc.metadata.get("source_file", "N/A"))
+        return os.path.basename(raw or "N/A").strip() or "مصادر إضافية"
 
     @staticmethod
-    def sources_footer_once(docs: List[Document], mode_choice: str) -> str:
-        """
-        Generate sources footer for display.
-
-        Args:
-            docs: Retrieved documents
-            mode_choice: User's source choice
-
-        Returns:
-            Formatted sources footer
-        """
-        # For banned substances, don't show file names
-        if mode_choice == "محظورات التجميل":
+    def sources_footer_once(docs: List[Document], chosen_sources_ui: List[str]) -> str:
+        if chosen_sources_ui and set(chosen_sources_ui) == {"محظورات التجميل"}:
             return "\n\n**المصدر:** محظورات التجميل"
 
         seen = set()
         sources = []
         for d in docs:
-            raw = d.metadata.get("source", d.metadata.get("source_file", "N/A"))
-            name = SourceDisplayManager.display_source_name(raw)
+            name = SourceDisplayManager.display_source_name_from_doc(d)
             if name and name not in seen:
                 seen.add(name)
                 sources.append(name)
@@ -228,25 +188,24 @@ class SourceDisplayManager:
         return "\n\n**المصدر:** " + ("، ".join(sources) if sources else "N/A")
 
 
+# ---------------------------------------------------------------------
+# Main Chatbot
+# ---------------------------------------------------------------------
 class SFDAChatbot:
     """Main chatbot class handling RAG operations."""
 
     def __init__(self):
-        """Initialize chatbot with models and vector store."""
         logger.info("Initializing SFDA Chatbot...")
 
-        # Validate API key
-        if not config.OPENROUTER_API_KEY:
+        if not getattr(config, "OPENROUTER_API_KEY", None):
             raise ValueError("OPENROUTER_API_KEY not found in .env file")
 
-        # Initialize embedding model
         logger.info("Loading embedding model...")
         self.embeddings_model = HuggingFaceEmbeddings(
             model_name=config.EMBEDDING_MODEL,
             model_kwargs={"device": config.EMBEDDING_DEVICE},
         )
 
-        # Initialize LLM
         logger.info("Initializing LLM...")
         self.llm = ChatOpenAI(
             model=config.LLM_MODEL,
@@ -256,7 +215,6 @@ class SFDAChatbot:
             max_tokens=config.LLM_MAX_TOKENS,
         )
 
-        # Initialize vector store
         logger.info("Loading vector store...")
         self.vector_store = Chroma(
             collection_name=config.COLLECTION_NAME,
@@ -264,7 +222,6 @@ class SFDAChatbot:
             persist_directory=config.CHROMA_PATH,
         )
 
-        # Log vector store stats
         try:
             count = self.vector_store._collection.count()
             logger.info(f"Vector store loaded. Document count: {count}")
@@ -274,18 +231,8 @@ class SFDAChatbot:
         logger.info("✅ Chatbot initialized successfully")
 
     def get_article_doc(self, article_num: str) -> Optional[Document]:
-        """
-        Retrieve a specific article by number.
-
-        Args:
-            article_num: Article number to retrieve
-
-        Returns:
-            Document containing the article, or None if not found
-        """
         target = str(article_num).strip()
 
-        # Try with regulation filter first
         try:
             docs = self.vector_store.similarity_search(
                 query=f"المادة {target}",
@@ -297,7 +244,6 @@ class SFDAChatbot:
         except Exception as e:
             logger.debug(f"Regulation filter search failed: {e}")
 
-        # Fallback to article-only filter
         try:
             docs = self.vector_store.similarity_search(
                 query=f"المادة {target}",
@@ -312,94 +258,57 @@ class SFDAChatbot:
         return None
 
     def format_article_output(self, doc: Document) -> str:
-        """
-        Format article document for display.
-
-        Args:
-            doc: Article document
-
-        Returns:
-            Formatted article text
-        """
-        art_num = ArabicArticleParser.normalize_article_to_num(
-            doc.metadata.get("article", "")
-        ) or ""
+        art_num = ArabicArticleParser.normalize_article_to_num(doc.metadata.get("article", "")) or ""
         title = f"نص المادة ({art_num}) من لوائح التجميل" if art_num else "نص المادة من لوائح التجميل"
         body = TextFormatter.pretty_arabic_text(doc.page_content)
 
-        # Remove "المادة X" prefix from body
         if art_num:
             body = re.sub(rf"^\s*المادة\s*{re.escape(art_num)}\s*\n+", "", body)
             body = re.sub(rf"^\s*المادة\s*{re.escape(art_num)}\s*[:：]?\s*", "", body)
 
         return f"**{title}**\n\n{body}".strip()
 
-    def build_retriever(self, choice: str):
-        """
-        Build retriever based on user's source choice.
+    def build_retriever(self, ui_choices: List[str]):
+        if not ui_choices:
+            return self.vector_store.as_retriever(search_kwargs={"k": config.RETRIEVAL_K})
 
-        Args:
-            choice: User's source selection
+        selected_categories = []
+        for ch in ui_choices:
+            if ch == "لوائح التجميل (PDF)":
+                selected_categories.append("regulation")
+            elif ch == "محظورات التجميل":
+                selected_categories.append("banned")
+            elif ch == "الأسس (GDP)":
+                selected_categories.append("gdp")
 
-        Returns:
-            Configured retriever
-        """
-        if choice == "لوائح التجميل (PDF)":
-            return self.vector_store.as_retriever(
-                search_kwargs={"k": config.RETRIEVAL_K, "filter": {"category": "regulation"}}
-            )
-        if choice == "محظورات التجميل":
-            return self.vector_store.as_retriever(
-                search_kwargs={"k": config.RETRIEVAL_K, "filter": {"category": "banned"}}
-            )
-        return self.vector_store.as_retriever(search_kwargs={"k": config.RETRIEVAL_K})
+        if not selected_categories or len(selected_categories) >= 3:
+            return self.vector_store.as_retriever(search_kwargs={"k": config.RETRIEVAL_K})
+
+        or_filter = {"$or": [{"category": c} for c in selected_categories]}
+        return self.vector_store.as_retriever(
+            search_kwargs={"k": config.RETRIEVAL_K, "filter": or_filter}
+        )
 
     @staticmethod
     def build_knowledge(docs: List[Document]) -> str:
-        """
-        Build knowledge context from retrieved documents.
-
-        Args:
-            docs: Retrieved documents
-
-        Returns:
-            Formatted knowledge context
-        """
         parts = []
         for d in docs:
-            src = SourceDisplayManager.display_source_name(
-                d.metadata.get("source", d.metadata.get("source_file", "N/A"))
-            )
+            src = SourceDisplayManager.display_source_name_from_doc(d)
             snippet = TextFormatter.pretty_arabic_text(d.page_content)[:1400]
             parts.append(f"[{src}]\n{snippet}")
         return "\n\n".join(parts)
 
-    def stream_response(
-        self, message: str, history: list, source_choice: str
-    ) -> Iterator[str]:
-        """
-        Stream chatbot response to user query.
-
-        Args:
-            message: User's question
-            history: Chat history (unused for now)
-            source_choice: User's source selection
-
-        Yields:
-            Partial responses as they are generated
-        """
+    def stream_response_core(self, message: str, source_choices: List[str]) -> Iterator[str]:
         message = (message or "").strip()
         if not message:
             yield "اكتبي سؤالك."
             return
 
         try:
-            # Check if asking for a specific article
             art_num = ArabicArticleParser.extract_article_number(message)
-
             if art_num:
-                if source_choice == "محظورات التجميل":
-                    yield "عذرًا، **المواد (المادة 4...)** تكون ضمن **لوائح التجميل (PDF)**. غيّري الاختيار للأعلى."
+                if source_choices and set(source_choices) == {"محظورات التجميل"}:
+                    yield "عذرًا، سؤال **المادة (مثل المادة الرابعة)** يكون ضمن **لوائح التجميل (PDF)**. فعّلي خيار اللوائح."
                     return
 
                 doc = self.get_article_doc(art_num)
@@ -408,12 +317,11 @@ class SFDAChatbot:
                     return
 
                 answer = self.format_article_output(doc)
-                answer += SourceDisplayManager.sources_footer_once([doc], source_choice)
+                answer += SourceDisplayManager.sources_footer_once([doc], source_choices)
                 yield answer
                 return
 
-            # RAG-based retrieval
-            retriever = self.build_retriever(source_choice)
+            retriever = self.build_retriever(source_choices)
             retrieved_docs = retriever.invoke("query: " + message)
 
             if not retrieved_docs:
@@ -423,7 +331,6 @@ class SFDAChatbot:
             top_docs = retrieved_docs[:3]
             knowledge = self.build_knowledge(top_docs)
 
-            # Generate response
             generation_prompt = f"""
 ROLE:
 أنت مساعد امتثال يعتمد فقط على النصوص المرفقة.
@@ -451,74 +358,144 @@ RULES (مهم جداً):
                     yield final_answer
 
             final_answer = final_answer.strip()
-            final_answer += SourceDisplayManager.sources_footer_once(top_docs, source_choice)
+            final_answer += SourceDisplayManager.sources_footer_once(top_docs, source_choices)
             yield final_answer
 
         except Exception as e:
             logger.error(f"Error generating response: {e}")
-            yield f"عذرًا، حدث خطأ أثناء معالجة سؤالك. الرجاء المحاولة مرة أخرى."
+            yield "عذرًا، حدث خطأ أثناء معالجة سؤالك. الرجاء المحاولة مرة أخرى."
 
 
+# ---------------------------------------------------------------------
+# UI (Gradio)
+# ---------------------------------------------------------------------
 def create_gradio_interface(chatbot: SFDAChatbot) -> gr.Blocks:
-    """
-    Create and configure Gradio interface.
+    css_code = """.gradio-container { font-family: Tahoma, sans-serif; }"""
 
-    Args:
-        chatbot: Initialized chatbot instance
+    try:
+        theme = gr.themes.Soft(primary_hue="blue")
+    except Exception:
+        theme = None
 
-    Returns:
-        Configured Gradio Blocks interface
-    """
-    css_code = """
-    .gradio-container { font-family: Tahoma, sans-serif; }
-    """
-
-    with gr.Blocks(css=css_code) as demo:
+    with gr.Blocks(css=css_code, theme=theme) as demo:
         gr.Markdown("# SANAD")
-        gr.Markdown("اختاري مصدر البحث أولاً (لوائح / محظورات / الكل)، ثم اكتبي سؤالك.")
+        gr.Markdown("اختاري **مصدر/مصادر البحث** ثم اكتبي سؤالك واضغطي **إرسال**.")
 
-        source_choice = gr.Radio(
-            choices=["لوائح التجميل (PDF)", "محظورات التجميل", "الكل"],
-            value="لوائح التجميل (PDF)",
-            label="مصدر البحث"
+        source_choices = gr.CheckboxGroup(
+            choices=["لوائح التجميل (PDF)", "محظورات التجميل", "الأسس (GDP)"],
+            value=["لوائح التجميل (PDF)"],
+            label="مصادر البحث (اختيار واحد أو أكثر)",
         )
 
-        gr.ChatInterface(
-            fn=chatbot.stream_response,
-            additional_inputs=[source_choice],
-            textbox=gr.Textbox(
+        chat = gr.Chatbot(label="المحادثة", height=520)
+        state = gr.State([])  # messages history
+
+        with gr.Row():
+            msg = gr.Textbox(
                 placeholder="اكتبي سؤالك...",
-                container=False,
-                autoscroll=True,
-                scale=7,
                 label="",
                 show_label=False,
-            ),
-            examples=[
-                ["لوائح التجميل (PDF)", "ما هي المادة الرابعة؟"],
-                ["لوائح التجميل (PDF)", "اذكر التزامات المُدرج في النظام"],
-                ["محظورات التجميل", "هل Mercury محظور في التجميل؟"],
-                ["محظورات التجميل", "اذكر لي 5 مواد محظورة تبدأ بحرف M"],
-            ],
+                scale=8,
+            )
+            send = gr.Button("إرسال", variant="primary", scale=2)
+
+        clear = gr.Button("مسح المحادثة")
+
+        def ensure_text(x) -> str:
+            if isinstance(x, list):
+                return " ".join([str(i) for i in x])
+            return str(x) if x is not None else ""
+
+        def add_user(user_message, history_state):
+            user_message = ensure_text(user_message).strip()
+            history_state = history_state or []
+
+            if not user_message:
+                return gr.update(value=""), history_state, history_state
+
+            history_state = history_state + [
+                {"role": "user", "content": user_message},
+                {"role": "assistant", "content": ""},
+            ]
+            return gr.update(value=""), history_state, history_state
+
+        def stream_bot(history_state, choices):
+            history_state = history_state or []
+
+            user_message = ""
+            for i in range(len(history_state) - 1, -1, -1):
+                if history_state[i].get("role") == "user":
+                    user_message = history_state[i].get("content", "")
+                    break
+
+            last_assistant_idx = None
+            for i in range(len(history_state) - 1, -1, -1):
+                if history_state[i].get("role") == "assistant":
+                    last_assistant_idx = i
+                    break
+
+            for chunk in chatbot.stream_response_core(user_message, choices):
+                if last_assistant_idx is not None:
+                    history_state[last_assistant_idx]["content"] = chunk
+                yield history_state, history_state
+
+        send.click(
+            fn=add_user,
+            inputs=[msg, state],
+            outputs=[msg, state, chat],
+        ).then(
+            fn=stream_bot,
+            inputs=[state, source_choices],
+            outputs=[chat, state],
         )
+
+        msg.submit(
+            fn=add_user,
+            inputs=[msg, state],
+            outputs=[msg, state, chat],
+        ).then(
+            fn=stream_bot,
+            inputs=[state, source_choices],
+            outputs=[chat, state],
+        )
+
+        def clear_all():
+            return [], []
+
+        clear.click(fn=clear_all, inputs=None, outputs=[chat, state])
+
+        # -----------------------------------------------------------------
+        # ✅ تعديل "جزئية الأسئلة" فقط:
+        # - حذف الأمثلة تحت
+        # - إضافة الأمثلة داخل الشات عند فتح الصفحة
+        # -----------------------------------------------------------------
+        initial_examples = (
+            "👋 **أمثلة جاهزة (انسخي/الصقي سؤالاً أو اكتبيه):**\n\n"
+            "• ما هي المادة الرابعة؟\n"
+            "• اذكر التزامات المُدرج في النظام\n"
+            "• هل Mercury محظور في التجميل؟\n"
+            "• اذكر لي 5 مواد محظورة تبدأ بحرف M\n"
+            "• ما هي متطلبات درجة الحرارة والرطوبة في المستودعات؟\n"
+        )
+
+        def init_chat():
+            history = [{"role": "assistant", "content": initial_examples}]
+            return history, history
+
+        demo.load(fn=init_chat, inputs=None, outputs=[chat, state])
 
     return demo
 
 
 def main():
-    """Main application entry point."""
     try:
-        # Initialize chatbot
-        chatbot = SFDAChatbot()
-
-        # Create and launch interface
-        demo = create_gradio_interface(chatbot)
+        bot = SFDAChatbot()
+        demo = create_gradio_interface(bot)
         demo.queue().launch(
             share=True,
             show_error=True,
-            debug=config.DEBUG
+            debug=getattr(config, "DEBUG", False),
         )
-
     except Exception as e:
         logger.error(f"Failed to start application: {e}")
         raise

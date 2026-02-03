@@ -13,3 +13,7 @@ __pycache__/
 
 # Torch / local wheels
 torch-*.whl
+
+# Cache
+cache/
+
