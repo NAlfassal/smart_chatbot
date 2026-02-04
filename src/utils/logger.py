@@ -1,21 +1,38 @@
 import logging
+import sys
 from pathlib import Path
 
-LOG_DIR = Path("logs")
-LOG_DIR.mkdir(exist_ok=True)
+def setup_logger():
+    """Sets up a singleton logger instance."""
+    # Define log path relative to this file: root/logs/app.log
+    log_dir = Path(__file__).resolve().parent.parent.parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / "app.log"
 
-LOG_FILE = LOG_DIR / "app.log"
+    logger_instance = logging.getLogger("smart_chatbot")
+    
+    # Avoid adding handlers multiple times if the function is called twice
+    if not logger_instance.handlers:
+        logger_instance.setLevel(logging.INFO)
 
-def get_logger(name: str):
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
-
-    if not logger.handlers:
-        file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+        # Standard English format
         formatter = logging.Formatter(
-            "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
 
-    return logger
+        # File Handler
+        try:
+            file_handler = logging.FileHandler(log_file, encoding='utf-8')
+            file_handler.setFormatter(formatter)
+            logger_instance.addHandler(file_handler)
+        except Exception as e:
+            print(f"Warning: Could not create log file: {e}")
+
+        # Console Handler
+        stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.setFormatter(formatter)
+        logger_instance.addHandler(stream_handler)
+    
+    return logger_instance
+
+logger = setup_logger()

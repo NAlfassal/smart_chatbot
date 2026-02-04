@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venvScriptspython.exe test_agent.py)",
+      "Bash(timeout:*)",
+      "Bash(\"d:\\\\last_update\\\\.venv\\\\Scripts\\\\python.exe\" test_agent.py)",
+      "Bash(python -c:*)",
+      "Bash(\".venv/Scripts/python.exe\" -c \"import sys; print\\(sys.executable\\); import langchain_core; print\\(''langchain_core OK''\\)\")",
+      "Bash(\".venv/Scripts/python.exe\" test_agent.py)"
+    ],
+    "additionalDirectories": [
+      "d:\\smart_chatbot"
+    ]
+  }
+}

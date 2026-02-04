@@ -16,4 +16,4 @@ torch-*.whl
 
 # Cache
 cache/
-
+data/

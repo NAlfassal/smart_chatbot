@@ -1,51 +1,38 @@
 """
-Configuration module for SFDA Cosmetics Chatbot.
+Configuration module for Chatbot.
 Centralizes all configuration settings and environment variables.
 """
-
 import os
 from pathlib import Path
 from typing import Literal
 from dotenv import load_dotenv
-
-# ------------------------------------------------------------
+from src.utils.logger import logger  
 # Load environment variables
-# ------------------------------------------------------------
+
 load_dotenv()
 
-# ------------------------------------------------------------
 # Gradio login (simple auth)
-# ------------------------------------------------------------
 GRADIO_USERNAME = os.getenv("GRADIO_USERNAME", "admin")
 GRADIO_PASSWORD = os.getenv("GRADIO_PASSWORD", "123456")
 
-# ------------------------------------------------------------
-# Base directories (after restructuring)
-# IMPORTANT: Keep these as STRINGS to avoid WindowsPath issues with Chroma
-# ------------------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parent
+# Base directories 
+BASE_DIR = Path(__file__).resolve().parent.parent  
 DATA_DIR = BASE_DIR / "data"
 
-# Defaults after your structure:
+
 # data/knowledge
 # data/chroma_db
 DATA_PATH = os.getenv("DATA_PATH", str(DATA_DIR / "knowledge"))
 CHROMA_PATH = os.getenv("CHROMA_PATH", str(DATA_DIR / "chroma_db"))
 
-# ------------------------------------------------------------
 # Database configuration
-# ------------------------------------------------------------
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "sfda_collection")
 
-# ------------------------------------------------------------
 # Embedding model configuration
-# ------------------------------------------------------------
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-large")
 EMBEDDING_DEVICE = os.getenv("EMBEDDING_DEVICE", "cpu")
 
-# ------------------------------------------------------------
 # LLM configuration
-# ------------------------------------------------------------
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -54,34 +41,25 @@ LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.0"))
 LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "700"))
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://openrouter.ai/api/v1")
 
-# ------------------------------------------------------------
 # RAG configuration
-# ------------------------------------------------------------
 RETRIEVAL_K = int(os.getenv("RETRIEVAL_K", "8"))
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "150"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "2000"))
 
-# ------------------------------------------------------------
+
 # Application configuration
-# ------------------------------------------------------------
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-# ------------------------------------------------------------
 # Regulation JSON configuration
-# ------------------------------------------------------------
-REG_JSON_NAME_HINTS = ["sfda_articles", "articles", "لوائح", "اللائحة"]
+REG_JSON_NAME_HINTS = ["cosmatics_articles", "articles", "لوائح", "اللائحة"]
 
-# ------------------------------------------------------------
 # Categories / Source types
-# ------------------------------------------------------------
 CategoryType = Literal["regulation", "banned", "gdp", "generic_json", "generic_jsonl", "raw_pdf"]
 SourceType = Literal["pdf", "json", "jsonl", "excel"]
 
 
-# ------------------------------------------------------------
 # Validation
-# ------------------------------------------------------------
 def validate_config() -> None:
     """Validate required configuration settings."""
     errors = []
@@ -101,15 +79,4 @@ def validate_config() -> None:
     if errors:
         raise ValueError("Configuration errors:\n" + "\n".join(f"  - {e}" for e in errors))
 
-
-# Run validation on import
-# Run validation on import
-if __name__ != "__main__":
-    # ✅ مفيد للتأكد من المسارات وقت التشغيل
-    print("DATA_PATH:", DATA_PATH)
-    print("CHROMA_PATH:", CHROMA_PATH)
-
-    try:
-        validate_config()
-    except ValueError as e:
-        print(f"⚠️ Configuration Warning: {e}")
+    logger.info("Configuration validated successfully.")

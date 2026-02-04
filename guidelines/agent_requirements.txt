@@ -1,0 +1,28 @@
+# ============================================================
+# متطلبات SFDA Drug Search Agent - LangChain 2026
+# ============================================================
+# تثبيت: pip install -r agent_requirements.txt
+
+# المكتبات الأساسية لـ LangChain (إذا لم تكن مثبتة)
+# langchain>=0.2.1
+# langchain-core>=0.2.1
+
+# LangGraph للـ StateGraph و MemorySaver (جديد - يجب إضافته)
+langgraph>=0.2.0
+
+# LangChain Anthropic للنموذج
+langchain-anthropic>=0.2.0
+
+# مكتبات للطلبات HTTP (موجودة بالفعل في requirements.txt)
+# httpx>=0.28.1
+
+# BeautifulSoup للـ web scraping (جديد)
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# اختياري: لتطبيق البحث الديناميكي الكامل في موقع SFDA
+# selenium>=4.15.0
+# playwright>=1.40.0
+
+# مكتبات مساعدة (موجودة بالفعل)
+# python-dotenv>=1.0.1
