@@ -80,3 +80,7 @@ def validate_config() -> None:
         raise ValueError("Configuration errors:\n" + "\n".join(f"  - {e}" for e in errors))
 
     logger.info("Configuration validated successfully.")
+
+
+UI_USERNAME = "admin"
+UI_PASSWORD = "123456"

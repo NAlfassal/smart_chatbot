@@ -72,3 +72,150 @@
 2026-02-04 15:21:39,951 - smart_chatbot - INFO - Connecting to Vector Store at: D:\smart_chatbot\data\chroma_db
 2026-02-04 15:21:40,151 - smart_chatbot - INFO - Vector store loaded. Document count: 0
 2026-02-04 15:21:40,152 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:10:06,187 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:10:06,187 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:11:01,452 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:11:01,452 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:11:48,317 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:11:49,644 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:11:50,185 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:11:50,185 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:11:50,300 - smart_chatbot - CRITICAL - Failed to launch UI: Chatbot.__init__() got an unexpected keyword argument 'type'
+2026-02-04 22:16:58,582 - smart_chatbot - INFO - --- Starting Smart Chatbot System ---
+2026-02-04 22:16:58,582 - smart_chatbot - INFO - Validating system configuration...
+2026-02-04 22:16:58,582 - smart_chatbot - INFO - Configuration validated successfully.
+2026-02-04 22:16:58,598 - smart_chatbot - INFO - Launching Gradio interface...
+2026-02-04 22:16:58,598 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:16:58,598 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:17:15,135 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:17:16,096 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:17:16,492 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:17:16,492 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:17:16,829 - smart_chatbot - CRITICAL - Application failed to start due to a critical error: Chatbot.__init__() got an unexpected keyword argument 'type'
+Traceback (most recent call last):
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\app.py", line 381, in start_application
+    demo = create_gradio_interface(bot)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\app.py", line 330, in create_gradio_interface
+    chatbot_ui = gr.Chatbot(label="المحادثة", height=550, type="messages")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\gradio\component_meta.py", line 194, in wrapper
+    return fn(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+TypeError: Chatbot.__init__() got an unexpected keyword argument 'type'
+2026-02-04 22:18:38,756 - smart_chatbot - INFO - --- Starting Smart Chatbot System ---
+2026-02-04 22:18:38,756 - smart_chatbot - INFO - Validating system configuration...
+2026-02-04 22:18:38,756 - smart_chatbot - INFO - Configuration validated successfully.
+2026-02-04 22:18:38,756 - smart_chatbot - INFO - Launching Gradio interface...
+2026-02-04 22:18:38,756 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:18:38,756 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:18:56,029 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:18:57,225 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:18:57,561 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:18:57,561 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:18:57,816 - smart_chatbot - CRITICAL - Application failed to start due to a critical error: Chatbot.__init__() got an unexpected keyword argument 'type'
+Traceback (most recent call last):
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\app.py", line 381, in start_application
+    demo = create_gradio_interface(bot)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\app.py", line 330, in create_gradio_interface
+    chatbot_ui = gr.Chatbot(label="المحادثة", height=550, type="messages")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\gradio\component_meta.py", line 194, in wrapper
+    return fn(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+TypeError: Chatbot.__init__() got an unexpected keyword argument 'type'
+2026-02-04 22:23:09,120 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:23:09,120 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:23:25,359 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:23:26,521 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:23:26,800 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:23:26,800 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:24:30,523 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:24:30,523 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:24:46,905 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:24:48,054 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:24:48,334 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:24:48,334 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:24:48,461 - smart_chatbot - CRITICAL - Failed to launch UI: Chatbot.__init__() got an unexpected keyword argument 'type'
+2026-02-04 22:28:49,980 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:28:49,980 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:29:05,751 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:29:06,941 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:29:07,201 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:29:07,201 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:35:35,259 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:35:35,259 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:35:51,510 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:35:52,437 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:35:52,682 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:35:52,682 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:42:43,381 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:42:43,382 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:42:56,359 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:42:57,273 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:42:57,589 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:42:57,590 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:45:16,961 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:45:16,961 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:45:30,483 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:45:31,335 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:45:31,660 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:45:31,660 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 22:51:48,650 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 22:51:48,650 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 22:52:01,901 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 22:52:02,821 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 22:52:03,071 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 22:52:03,071 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 23:54:12,156 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 23:54:12,156 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 23:54:56,425 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 23:54:58,180 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 23:54:58,673 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 23:54:58,688 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-04 23:54:58,798 - smart_chatbot - CRITICAL - Failed to launch UI: 'HTML' object does not support the context manager protocol
+Traceback (most recent call last):
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\src\ui_gradio.py", line 591, in main
+    demo = create_gradio_interface(bot)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\src\ui_gradio.py", line 422, in create_gradio_interface
+    with gr.HTML(
+TypeError: 'HTML' object does not support the context manager protocol
+2026-02-04 23:56:37,820 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-04 23:56:37,820 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-04 23:56:55,073 - smart_chatbot - INFO - Initializing LLM...
+2026-02-04 23:56:56,283 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-04 23:56:56,566 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-04 23:56:56,566 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 00:00:08,617 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:00:08,617 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-05 00:00:25,643 - smart_chatbot - INFO - Initializing LLM...
+2026-02-05 00:00:26,747 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-05 00:00:27,040 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-05 00:00:27,040 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 00:12:48,457 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:12:48,457 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-05 00:13:04,510 - smart_chatbot - INFO - Initializing LLM...
+2026-02-05 00:13:05,578 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-05 00:13:05,860 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-05 00:13:05,860 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 00:19:08,306 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:19:08,306 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-05 00:19:26,612 - smart_chatbot - INFO - Initializing LLM...
+2026-02-05 00:19:27,770 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-05 00:19:28,070 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-05 00:19:28,070 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 00:25:13,537 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:25:13,538 - smart_chatbot - INFO - Loading embedding model: intfloat/multilingual-e5-large
+2026-02-05 00:25:27,646 - smart_chatbot - INFO - Initializing LLM...
+2026-02-05 00:25:28,574 - smart_chatbot - INFO - Connecting to Vector Store at: data/chroma_db
+2026-02-05 00:25:28,786 - smart_chatbot - INFO - Vector store loaded. Document count: 5496
+2026-02-05 00:25:28,786 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 00:30:37,400 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:36:30,471 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:45:10,312 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:49:13,951 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:52:16,484 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:57:42,455 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 00:57:57,063 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
