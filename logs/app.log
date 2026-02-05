@@ -219,6 +219,7 @@ TypeError: 'HTML' object does not support the context manager protocol
 2026-02-05 00:52:16,484 - smart_chatbot - INFO - Initializing SFDA Chatbot...
 2026-02-05 00:57:42,455 - smart_chatbot - INFO - Initializing SFDA Chatbot...
 2026-02-05 00:57:57,063 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+<<<<<<< Updated upstream
 2026-02-05 12:40:46,553 - smart_chatbot - INFO - Initializing SFDA Chatbot...
 2026-02-05 12:41:17,193 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
 2026-02-05 12:49:06,412 - smart_chatbot - INFO - Initializing SFDA Chatbot...
@@ -286,3 +287,84 @@ ValueError: Expected where value for $and or $or to be a list with at least two 
 2026-02-05 13:45:08,054 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
 2026-02-05 13:49:58,944 - smart_chatbot - INFO - Initializing SFDA Chatbot...
 2026-02-05 13:50:17,065 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+=======
+2026-02-05 12:31:41,745 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 12:32:21,234 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:07:23,183 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:08:23,552 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:21:26,113 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:21:36,283 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:38:35,833 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+>>>>>>> Stashed changes
+2026-02-05 14:03:12,599 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 14:03:23,149 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 14:06:26,629 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 14:06:37,649 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 14:45:05,881 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 14:45:16,236 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 14:55:58,411 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 14:56:08,524 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 14:57:35,619 - smart_chatbot - ERROR - stream_response_core error: Expected where value for $and or $or to be a list with at least two where expressions, got [{'category': 'regulation'}]
+Traceback (most recent call last):
+  File "D:\smart_chatbot\src\ui_gradio.py", line 279, in stream_response_core
+    retrieved_docs = retriever.invoke(message)
+  File "D:\smart_chatbot\.venv\Lib\site-packages\langchain_core\retrievers.py", line 194, in invoke
+    return self.get_relevant_documents(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        input,
+        ^^^^^^
+    ...<4 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "D:\smart_chatbot\.venv\Lib\site-packages\langchain_core\_api\deprecation.py", line 148, in warning_emitting_wrapper
+    return wrapped(*args, **kwargs)
+  File "D:\smart_chatbot\.venv\Lib\site-packages\langchain_core\retrievers.py", line 323, in get_relevant_documents
+    raise e
+  File "D:\smart_chatbot\.venv\Lib\site-packages\langchain_core\retrievers.py", line 316, in get_relevant_documents
+    result = self._get_relevant_documents(
+        query, run_manager=run_manager, **_kwargs
+    )
+  File "D:\smart_chatbot\.venv\Lib\site-packages\langchain_core\vectorstores.py", line 696, in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **self.search_kwargs)
+  File "D:\smart_chatbot\.venv\Lib\site-packages\langchain_chroma\vectorstores.py", line 384, in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+        query, k, filter=filter, **kwargs
+    )
+  File "D:\smart_chatbot\.venv\Lib\site-packages\langchain_chroma\vectorstores.py", line 474, in similarity_search_with_score
+    results = self.__query_collection(
+        query_embeddings=[query_embedding],
+    ...<3 lines>...
+        **kwargs,
+    )
+  File "D:\smart_chatbot\.venv\Lib\site-packages\langchain_core\utils\utils.py", line 36, in wrapper
+    return func(*args, **kwargs)
+  File "D:\smart_chatbot\.venv\Lib\site-packages\langchain_chroma\vectorstores.py", line 191, in __query_collection
+    return self._collection.query(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        query_texts=query_texts,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "D:\smart_chatbot\.venv\Lib\site-packages\chromadb\api\models\Collection.py", line 295, in query
+    valid_where = validate_where(where) if where else {}
+                  ~~~~~~~~~~~~~~^^^^^^^
+  File "D:\smart_chatbot\.venv\Lib\site-packages\chromadb\api\types.py", line 342, in validate_where
+    raise ValueError(
+        f"Expected where value for $and or $or to be a list with at least two where expressions, got {value}"
+    )
+ValueError: Expected where value for $and or $or to be a list with at least two where expressions, got [{'category': 'regulation'}]
+2026-02-05 15:26:02,741 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 15:26:13,580 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 15:26:54,415 - smart_chatbot - ERROR - stream_response_core error: name 'web_found_success' is not defined
+Traceback (most recent call last):
+  File "D:\smart_chatbot\src\ui_gradio.py", line 288, in stream_response_core
+    if web_found_success:
+       ^^^^^^^^^^^^^^^^^
+NameError: name 'web_found_success' is not defined
+2026-02-05 15:29:59,055 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 15:30:09,866 - smart_chatbot - INFO - ✅ Chatbot initialized successfully

@@ -1,7 +1,7 @@
-# src/ui_gradio.py
-
 import os
 import re
+import sys
+import asyncio
 from typing import List, Optional, Iterator, Any, Dict
 
 import gradio as gr
@@ -14,31 +14,68 @@ from langchain_core.messages import HumanMessage
 from src.utils.logger import logger
 from src import config
 
+# ✅ استيراد أداة البحث
+from src.tools.search import SDISearchTool
+
 
 # ============================================================
 # Helpers
 # ============================================================
 class ArabicArticleParser:
+    """Handles parsing and conversion of Arabic article numbers."""
+    
+    # ✅ قائمة منقحة ومرتبة بدون تكرار في المفاتيح
     AR_WORD_TO_NUM = {
-        "الأولى": "1", "الاولى": "1", "الثانية": "2", "الثالثة": "3", "الرابعة": "4",
-        "الخامسة": "5", "السادسة": "6", "السابعة": "7", "الثامنة": "8", "التاسعة": "9",
-        "العاشرة": "10", "الحادية عشر": "11", "الحادية عشرة": "11", "الثانية عشر": "12",
-        "الثانية عشرة": "12", "الثالثة عشر": "13", "الثالثة عشرة": "13", "الرابعة عشر": "14",
-        "الرابعة عشرة": "14", "الخامسة عشر": "15", "الخامسة عشرة": "15", "السادسة عشر": "16",
-        "السادسة عشرة": "16", "السابعة عشر": "17", "السابعة عشرة": "17", "الثامنة عشر": "18",
-        "الثامنة عشرة": "18", "التاسعة عشر": "19", "التاسعة عشرة": "19", "العشرون": "20",
-        "الحادية والعشرون": "21", "الثانية والعشرون": "22", "الثالثة والعشرون": "23",
-        "الرابعة والعشرون": "24", "الخامسة والعشرون": "25", "السادسة والعشرون": "26",
-        "السابعة والعشرون": "27", "الثامنة والعشرون": "28", "التاسعة والعشرون": "29", "الثلاثون": "30",
+        # الآحاد
+        "الأولى": "1", "الاولى": "1",
+        "الثانية": "2",
+        "الثالثة": "3",
+        "الرابعة": "4",
+        "الخامسة": "5",
+        "السادسة": "6",
+        "السابعة": "7",
+        "الثامنة": "8",
+        "التاسعة": "9",
+        "العاشرة": "10",
+        
+        # عشر
+        "الحادية عشر": "11", "الحادية عشرة": "11",
+        "الثانية عشر": "12", "الثانية عشرة": "12",
+        "الثالثة عشر": "13", "الثالثة عشرة": "13",
+        "الرابعة عشر": "14", "الرابعة عشرة": "14",
+        "الخامسة عشر": "15", "الخامسة عشرة": "15",
+        "السادسة عشر": "16", "السادسة عشرة": "16",
+        "السابعة عشر": "17", "السابعة عشرة": "17",
+        "الثامنة عشر": "18", "الثامنة عشرة": "18",
+        "التاسعة عشر": "19", "التاسعة عشرة": "19",
+        
+        # العقود
+        "العشرون": "20", "عشرون": "20",
+        "الثلاثون": "30", "ثلاثون": "30",
+        "الأربعون": "40", "أربعون": "40", "الاربعون": "40",
+        "الخمسون": "50", "خمسون": "50",
+        
+        # المركبة (عينة شائعة)
+        "الحادية والعشرون": "21", "الحادية وعشرون": "21",
+        "الثانية والعشرون": "22", "الثانية وعشرون": "22",
+        "الثالثة والعشرون": "23", "الثالثة وعشرون": "23",
+        "الرابعة والعشرون": "24", "الرابعة وعشرون": "24",
+        "الخامسة والعشرون": "25", "الخامسة وعشرون": "25",
+        "السادسة والعشرون": "26", "السادسة وعشرون": "26",
+        "السابعة والعشرون": "27", "السابعة وعشرون": "27",
+        "الثامنة والعشرون": "28", "الثامنة وعشرون": "28",
+        "التاسعة والعشرون": "29", "التاسعة وعشرون": "29",
     }
 
     @classmethod
     def extract_article_number(cls, text: str) -> Optional[str]:
         text = text or ""
+        # محاولة استخراج رقم صريح (المادة 5)
         m = re.search(r"المادة\s+(\d+)", text)
         if m:
             return m.group(1)
 
+        # محاولة استخراج نص (المادة الخامسة)
         m = re.search(r"المادة\s+([^\n،,.؟!]+)", text)
         if not m:
             return None
@@ -46,9 +83,11 @@ class ArabicArticleParser:
         phrase = re.sub(r"\s{2,}", " ", m.group(1).replace("ـ", "")).strip()
         phrase = re.sub(r"^\s*المادة\s+", "", phrase).strip()
 
+        # بحث مباشر
         if phrase in cls.AR_WORD_TO_NUM:
             return cls.AR_WORD_TO_NUM[phrase]
 
+        # بحث جزئي (أول 4 كلمات)
         words = phrase.split()
         for n in (4, 3, 2, 1):
             if len(words) >= n:
@@ -98,11 +137,16 @@ class SourceDisplayManager:
 # Chatbot Logic
 # ============================================================
 class SFDAChatbot:
+    # القائمة المتاحة للخيارات
     UI_TO_CATEGORY = {
         "لوائح التجميل (PDF)": "regulation",
         "محظورات التجميل": "banned",
         "الأسس (GDP)": "gdp",
+        "سجل الأدوية (SDI)": "web_sdi"
     }
+    
+    # مفتاح الخيار الشامل
+    ALL_SOURCES_KEY = "جميع مصادر البحث"
 
     def __init__(self):
         logger.info("Initializing SFDA Chatbot...")
@@ -122,12 +166,21 @@ class SFDAChatbot:
             embedding_function=self.embeddings_model,
             persist_directory=str(config.CHROMA_PATH),
         )
+        
+        # تهيئة أداة البحث
+        self.search_tool = SDISearchTool()
 
         logger.info("✅ Chatbot initialized successfully")
 
     def _selected_categories(self, source_choices: Optional[List[str]]) -> List[str]:
+        """تحديد الفئات المطلوبة بناءً على اختيارات المستخدم."""
         if not source_choices:
             return []
+
+        # ✅ منطق "الكل": إذا تم اختياره، نرجع كل الفئات المتاحة
+        if self.ALL_SOURCES_KEY in source_choices:
+            return list(self.UI_TO_CATEGORY.values())
+
         cats = []
         for s in source_choices:
             c = self.UI_TO_CATEGORY.get(s)
@@ -136,9 +189,13 @@ class SFDAChatbot:
         return cats
 
     def _build_category_filter(self, selected_cats: List[str]) -> Optional[Dict[str, Any]]:
-        if not selected_cats:
+        # استبعاد الويب من فلتر قاعدة البيانات
+        db_cats = [c for c in selected_cats if c != "web_sdi"]
+        
+        if not db_cats:
             return None
-        return {"$or": [{"category": c} for c in selected_cats]}
+        # ChromaDB Filter
+        return {"$or": [{"category": c} for c in db_cats]}
 
     def _and_filter(self, *parts: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         parts_clean = [p for p in parts if p]
@@ -172,9 +229,43 @@ class SFDAChatbot:
             return
 
         try:
+            # تحويل خيارات الواجهة إلى فئات داخلية (مع معالجة "جميع المصادر")
             selected_cats = self._selected_categories(source_choices)
-            cat_filter = self._build_category_filter(selected_cats)
+            
+            # ------------------------------------
+            # 1. Web Search (SDI) Logic
+            # ------------------------------------
+            if "web_sdi" in selected_cats:
+                yield "🌍 جاري البحث في سجل الأدوية (SDI)..."
+                try:
+                    trade_name = message.strip()
+                    # البحث غير المتزامن
+                    search_result = asyncio.run(self.search_tool.search_drug(trade_name))
+                    
+                    web_msg = f"**نتائج سجل الأدوية (SDI):**\n\n{search_result['message']}"
+                    yield web_msg
+                    
+                    # إذا كان المستخدم يبحث في الويب فقط (أو الكل ولكن لا يوجد ملفات أخرى)
+                    # لكن هنا في حالة "الكل" سنكمل البحث في الملفات
+                    if len(selected_cats) == 1: 
+                        return
+                        
+                    yield web_msg + "\n\n---\n🔄 جاري البحث في المصادر الداخلية...\n"
+                    
+                except Exception as e:
+                    logger.error(f"Web Search Error: {e}")
+                    yield f"⚠️ خطأ في بحث الويب: {str(e)}\n\nجاري إكمال البحث..."
 
+            # ------------------------------------
+            # 2. Local RAG Logic
+            # ------------------------------------
+            cat_filter = self._build_category_filter(selected_cats)
+            
+            # إذا لم يتبق مصادر داخلية للبحث فيها (مثلاً اختار ويب فقط وتمت معالجته)
+            if not cat_filter and not any(c != "web_sdi" for c in selected_cats):
+                return
+
+            # أ) البحث عن رقم مادة
             art_num = ArabicArticleParser.extract_article_number(message)
             if art_num:
                 doc = self.get_article_doc(art_num, selected_cats=selected_cats)
@@ -183,6 +274,7 @@ class SFDAChatbot:
                     yield ans + SourceDisplayManager.sources_footer_once([doc])
                     return
 
+            # ب) البحث الدلالي
             search_kwargs: Dict[str, Any] = {"k": 3}
             if cat_filter:
                 search_kwargs["filter"] = cat_filter
@@ -190,11 +282,19 @@ class SFDAChatbot:
             retriever = self.vector_store.as_retriever(search_kwargs=search_kwargs)
             retrieved_docs = retriever.invoke(message)
 
+            # --- 🛑 إصلاح اللوجيك هنا ---
             if not retrieved_docs:
-                chosen = "، ".join(source_choices or [])
-                yield f"لا توجد معلومات في المصادر المتاحة.\n\n**المصادر المختارة:** {chosen if chosen else 'الكل'}"
-                return
+                # إذا وجدنا نتيجة في الويب سابقاً، لا داعي لقول "لا توجد معلومات"
+                if web_found_success:
+                    yield f"**✅ نتائج سجل الأدوية (SDI):**\n\n{search_result['message']}\n\n(لم يتم العثور على معلومات إضافية في اللوائح المحلية)"
+                    return
+                else:
+                    # لم نجد في الويب ولم نجد في الملفات
+                    chosen = "، ".join(source_choices or [])
+                    yield f"لم يتم العثور على معلومات في المصادر المحددة.\n**المصادر:** {chosen if chosen else 'الكل'}"
+                    return
 
+            # ج) صياغة الإجابة
             knowledge = "\n\n".join(
                 [f"[{SourceDisplayManager.display_source_name_from_doc(d)}]\n{d.page_content[:1000]}" for d in retrieved_docs]
             )
@@ -213,12 +313,18 @@ INSTRUCTIONS:
 """.strip()
 
             final_answer = ""
+            # إذا كان هناك نتيجة ويب، نضعها في البداية
+            prefix_msg = ""
+            if web_found_success:
+                prefix_msg = f"**✅ نتائج سجل الأدوية (SDI):**\n\n{search_result['message']}\n\n---\n**نتائج اللوائح المحلية:**\n"
+                yield prefix_msg # عرض نتيجة الويب فوراً قبل انتظار الـ LLM
+
             for chunk in self.llm.stream([HumanMessage(content=prompt)]):
                 if chunk.content:
                     final_answer += chunk.content
-                    yield final_answer
+                    yield prefix_msg + final_answer
 
-            yield final_answer + SourceDisplayManager.sources_footer_once(retrieved_docs)
+            yield prefix_msg + final_answer + SourceDisplayManager.sources_footer_once(retrieved_docs)
 
         except Exception as e:
             logger.error(f"stream_response_core error: {e}", exc_info=True)
@@ -226,7 +332,7 @@ INSTRUCTIONS:
 
 
 # ============================================================
-# CSS (SAFE: لا يغير هيكلة Gradio)
+# CSS
 # ============================================================
 CSS_CODE = """
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
@@ -284,7 +390,6 @@ CSS_CODE = """
   padding: 12px 18px 18px 18px;
 }
 
-/* Header صغير مناسب للابتوب */
 #chat_header{
   background: linear-gradient(135deg,var(--primary) 0%,var(--primary2) 100%) !important;
   border-radius: 18px !important;
@@ -296,7 +401,6 @@ CSS_CODE = """
 #chat_header h1{ margin:0; font-size:28px; font-weight:900; }
 #chat_header p{ margin:6px 0 0 0; opacity:.95; font-size:14px; }
 
-/* Panels */
 .panel{
   background: var(--card) !important;
   border: 1px solid var(--border) !important;
@@ -305,15 +409,13 @@ CSS_CODE = """
   padding: 14px !important;
 }
 
-/* Chatbot: ارتفاع مناسب للابتوب */
 #chatbot_box{
-  height: 62vh;              /* ✅ يخلي الشاشة ما تحتاج سكرول كثير */
+  height: 62vh;
   min-height: 420px;
   border-radius: 18px !important;
   overflow: auto;
 }
 
-/* Inputs */
 #send_btn{
   background: linear-gradient(135deg,var(--primary) 0%,var(--primary2) 100%) !important;
   color:#fff !important;
@@ -334,7 +436,6 @@ CSS_CODE = """
   font-weight:700 !important;
 }
 
-/* bot text black */
 .gradio-chatbot .bot, .gradio-chatbot .bot * { color:#000 !important; }
 
 footer{ display:none !important; }
@@ -370,15 +471,25 @@ def create_gradio_interface(chatbot: SFDAChatbot) -> gr.Blocks:
         with gr.Column(visible=False) as chat_view:
             with gr.Column(elem_id="page_wrap"):
                 with gr.Column(elem_id="chat_header"):
-                    gr.HTML("<h1>🇸🇦 سَنَد - SANAD</h1><p>المساعد الذكي ت</p>")
+                    gr.HTML("<h1>🇸🇦 سَنَد - SANAD</h1><p>المساعد الذكي</p>")
 
                 with gr.Row():
                     # Sidebar
                     with gr.Column(scale=1):
                         with gr.Column(elem_classes=["panel"]):
                             gr.Markdown("### 🔍 مصادر البحث")
+                            
+                            # ✅ تحديث القائمة لإضافة الخيار الجديد
+                            choices_list = [
+                                "جميع مصادر البحث", # الخيار الجديد
+                                "لوائح التجميل (PDF)",
+                                "محظورات التجميل", 
+                                "الأسس (GDP)", 
+                                "سجل الأدوية (SDI)"
+                            ]
+                            
                             source_choices = gr.CheckboxGroup(
-                                choices=["لوائح التجميل (PDF)", "محظورات التجميل", "الأسس (GDP)"],
+                                choices=choices_list,
                                 value=["لوائح التجميل (PDF)"],
                                 label="",
                                 interactive=True,
@@ -388,9 +499,9 @@ def create_gradio_interface(chatbot: SFDAChatbot) -> gr.Blocks:
                         with gr.Column(elem_classes=["panel"]):
                             gr.Markdown("### ✨ أمثلة جاهزة")
                             examples = [
+                                "Panadol",
                                 "ما هي اشتراطات تخزين منتجات التجميل؟",
                                 "اذكر مسؤوليات المصنع حسب اللوائح.",
-                                "ماذا تقول المادة 20؟",
                                 "هل توجد مواد محظورة في مستحضرات التجميل؟",
                                 "ما متطلبات GDP للتوزيع والتخزين؟",
                             ]
@@ -407,12 +518,13 @@ def create_gradio_interface(chatbot: SFDAChatbot) -> gr.Blocks:
                                 show_label=False,
                                 elem_id="chatbot_box",
                                 rtl=True,
+                                type="messages"
                             )
 
                         with gr.Column(elem_classes=["panel"]):
                             with gr.Row():
                                 msg = gr.Textbox(
-                                    placeholder="اكتب سؤالك هنا...",
+                                    placeholder="اكتب سؤالك أو اسم الدواء...",
                                     scale=4,
                                     show_label=False,
                                     container=False,

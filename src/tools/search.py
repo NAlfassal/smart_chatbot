@@ -103,7 +103,7 @@ class SDISearchTool:
                             await browser.close()
                             return {
                                 "status": "not_found",
-                                "message": f"Drug ({trade_name}) is not registered."
+                                "message": f"الدواء ({trade_name}) غير مسجل."
                             }
 
                     # Extract data if results exist
@@ -113,12 +113,12 @@ class SDISearchTool:
                     if data:
                         return {
                             "status": "success",
-                            "message": f"Found Registered Drug:\n\n{data}"
+                            "message": f"الدواء مسجل\n\n{data}"
                         }
                     else:
                         return {
                             "status": "not_found",
-                            "message": f"No clear data found for ({trade_name})."
+                            "message": f"لاتوجد معلومات عن الدواء لدى SDI-SFDA , الرجاء التأكد من صحة الإسم المدخل ({trade_name})."
                         }
 
                 except PlaywrightTimeoutError:

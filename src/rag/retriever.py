@@ -13,7 +13,6 @@ def build_retriever(vector_store, ui_choices: List[str]):
     """
     Build a retriever with optional category filtering based on UI choices.
     """
-    # تصحيح: استخدام المتغير المباشر بدلاً من settings object
     k = RETRIEVAL_K 
 
     logger.info(f"Building retriever with UI choices: {ui_choices}")
@@ -29,7 +28,7 @@ def build_retriever(vector_store, ui_choices: List[str]):
 
     # 2. إذا اختار الكل (أو أكثر من 2 خيارات)، نعتبرها بحثاً عاماً
     # (يمكنك تعديل هذا الشرط إذا أردت تفعيل الفلتر حتى لو اختار 3)
-    if not selected or len(selected) >= 3:
+    if not selected or len(selected) >= len(UI_TO_CATEGORY):
         logger.info("All categories selected or implied. No filter applied.")
         return vector_store.as_retriever(search_kwargs={"k": k})
    

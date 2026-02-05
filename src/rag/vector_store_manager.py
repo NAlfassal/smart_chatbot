@@ -7,7 +7,6 @@ def get_vector_store():
     try:
         embeddings = get_embeddings()
         
-        # Chroma يتطلب المسار كنص string
         persist_dir = str(CHROMA_PATH)
         
         logger.info(f"Connecting to ChromaDB at: {persist_dir} | Collection: {COLLECTION_NAME}")
