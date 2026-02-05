@@ -219,3 +219,70 @@ TypeError: 'HTML' object does not support the context manager protocol
 2026-02-05 00:52:16,484 - smart_chatbot - INFO - Initializing SFDA Chatbot...
 2026-02-05 00:57:42,455 - smart_chatbot - INFO - Initializing SFDA Chatbot...
 2026-02-05 00:57:57,063 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 12:40:46,553 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 12:41:17,193 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 12:49:06,412 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 12:49:26,942 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 12:54:47,751 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 12:55:09,744 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 12:59:43,270 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:00:01,460 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:04:55,699 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:05:15,762 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:06:07,215 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:06:26,048 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:07:11,148 - smart_chatbot - ERROR - stream_response_core error: Expected where value for $and or $or to be a list with at least two where expressions, got [{'category': 'banned'}]
+Traceback (most recent call last):
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\src\ui_gradio.py", line 195, in stream_response_core
+    retrieved_docs = retriever.invoke(message)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\langchain_core\retrievers.py", line 194, in invoke
+    return self.get_relevant_documents(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\langchain_core\_api\deprecation.py", line 148, in warning_emitting_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\langchain_core\retrievers.py", line 323, in get_relevant_documents
+    raise e
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\langchain_core\retrievers.py", line 316, in get_relevant_documents
+    result = self._get_relevant_documents(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\langchain_core\vectorstores.py", line 696, in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **self.search_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\langchain_chroma\vectorstores.py", line 384, in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\langchain_chroma\vectorstores.py", line 474, in similarity_search_with_score
+    results = self.__query_collection(
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\langchain_core\utils\utils.py", line 36, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\langchain_chroma\vectorstores.py", line 191, in __query_collection
+    return self._collection.query(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\chromadb\api\models\Collection.py", line 295, in query
+    valid_where = validate_where(where) if where else {}
+                  ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\Downloads\smart_chatbot-main\smart_chatbot-main\.venv\Lib\site-packages\chromadb\api\types.py", line 342, in validate_where
+    raise ValueError(
+ValueError: Expected where value for $and or $or to be a list with at least two where expressions, got [{'category': 'banned'}]
+2026-02-05 13:10:57,017 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:11:17,716 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:21:58,304 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:22:16,827 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:23:31,487 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:23:49,593 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:28:16,345 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:28:33,794 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:31:28,512 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:31:47,969 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:34:20,534 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:34:40,128 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:39:19,050 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:39:37,862 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:44:48,500 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:45:08,054 - smart_chatbot - INFO - ✅ Chatbot initialized successfully
+2026-02-05 13:49:58,944 - smart_chatbot - INFO - Initializing SFDA Chatbot...
+2026-02-05 13:50:17,065 - smart_chatbot - INFO - ✅ Chatbot initialized successfully

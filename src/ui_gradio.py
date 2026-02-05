@@ -2,8 +2,7 @@
 
 import os
 import re
-import sys
-from typing import List, Optional, Iterator, Any
+from typing import List, Optional, Iterator, Any, Dict
 
 import gradio as gr
 from langchain_openai import ChatOpenAI
@@ -84,7 +83,7 @@ class SourceDisplayManager:
         return os.path.basename(raw or "N/A").strip() or "مصادر إضافية"
 
     @staticmethod
-    def sources_footer_once(docs: List[Document], chosen_sources_ui: List[str]) -> str:
+    def sources_footer_once(docs: List[Document]) -> str:
         seen = set()
         sources = []
         for d in docs:
@@ -99,6 +98,12 @@ class SourceDisplayManager:
 # Chatbot Logic
 # ============================================================
 class SFDAChatbot:
+    UI_TO_CATEGORY = {
+        "لوائح التجميل (PDF)": "regulation",
+        "محظورات التجميل": "banned",
+        "الأسس (GDP)": "gdp",
+    }
+
     def __init__(self):
         logger.info("Initializing SFDA Chatbot...")
 
@@ -120,13 +125,39 @@ class SFDAChatbot:
 
         logger.info("✅ Chatbot initialized successfully")
 
-    def get_article_doc(self, article_num: str) -> Optional[Document]:
+    def _selected_categories(self, source_choices: Optional[List[str]]) -> List[str]:
+        if not source_choices:
+            return []
+        cats = []
+        for s in source_choices:
+            c = self.UI_TO_CATEGORY.get(s)
+            if c:
+                cats.append(c)
+        return cats
+
+    def _build_category_filter(self, selected_cats: List[str]) -> Optional[Dict[str, Any]]:
+        if not selected_cats:
+            return None
+        return {"$or": [{"category": c} for c in selected_cats]}
+
+    def _and_filter(self, *parts: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        parts_clean = [p for p in parts if p]
+        if not parts_clean:
+            return None
+        if len(parts_clean) == 1:
+            return parts_clean[0]
+        return {"$and": parts_clean}
+
+    def get_article_doc(self, article_num: str, selected_cats: Optional[List[str]] = None) -> Optional[Document]:
         target = str(article_num).strip()
         try:
+            cat_filter = self._build_category_filter(selected_cats or [])
+            where = self._and_filter({"article": target}, cat_filter)
+
             docs = self.vector_store.similarity_search(
                 query=f"المادة {target}",
                 k=1,
-                filter={"article": target},
+                filter=where if where else {"article": target},
             )
             if docs:
                 return docs[0]
@@ -135,29 +166,33 @@ class SFDAChatbot:
         return None
 
     def stream_response_core(self, message: Any, source_choices: List[str]) -> Iterator[str]:
-        # Robust: sometimes Gradio passes list
-        if isinstance(message, list):
-            message = " ".join(str(x) for x in message)
-
-        message = str(message).strip()
+        message = str(message or "").strip()
         if not message:
             yield "اكتب سؤالك."
             return
 
         try:
+            selected_cats = self._selected_categories(source_choices)
+            cat_filter = self._build_category_filter(selected_cats)
+
             art_num = ArabicArticleParser.extract_article_number(message)
             if art_num:
-                doc = self.get_article_doc(art_num)
+                doc = self.get_article_doc(art_num, selected_cats=selected_cats)
                 if doc:
                     ans = TextFormatter.pretty_arabic_text(doc.page_content)
-                    yield ans + SourceDisplayManager.sources_footer_once([doc], source_choices)
+                    yield ans + SourceDisplayManager.sources_footer_once([doc])
                     return
 
-            retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
+            search_kwargs: Dict[str, Any] = {"k": 3}
+            if cat_filter:
+                search_kwargs["filter"] = cat_filter
+
+            retriever = self.vector_store.as_retriever(search_kwargs=search_kwargs)
             retrieved_docs = retriever.invoke(message)
 
             if not retrieved_docs:
-                yield "لم أجد نصاً صريحاً في المصادر."
+                chosen = "، ".join(source_choices or [])
+                yield f"لا توجد معلومات في المصادر المتاحة.\n\n**المصادر المختارة:** {chosen if chosen else 'الكل'}"
                 return
 
             knowledge = "\n\n".join(
@@ -183,7 +218,7 @@ INSTRUCTIONS:
                     final_answer += chunk.content
                     yield final_answer
 
-            yield final_answer + SourceDisplayManager.sources_footer_once(retrieved_docs, source_choices)
+            yield final_answer + SourceDisplayManager.sources_footer_once(retrieved_docs)
 
         except Exception as e:
             logger.error(f"stream_response_core error: {e}", exc_info=True)
@@ -191,113 +226,117 @@ INSTRUCTIONS:
 
 
 # ============================================================
-# CSS (Center card + all text black + inputs white)
+# CSS (SAFE: لا يغير هيكلة Gradio)
 # ============================================================
 CSS_CODE = """
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+
 :root{
-  --bg: #D4B2B8;            /* نفس خلفيتك الوردية */
-  --card: #FFFFFF;
-  --text: #000000;
-  --muted: #111827;
-
-  --input-bg: #FFFFFF;
-  --input-border: #D1D5DB;
-
-  --btn-bg: #D4B2B8;        /* زر نفس لون الخلفية */
-  --btn-text: #111827;
+  --primary:#006C3A;
+  --primary2:#005530;
+  --bg1:#F8F9FA;
+  --bg2:#E9ECEF;
+  --card:#FFFFFF;
+  --text:#111827;
+  --muted:#6B7280;
+  --border:#E5E7EB;
+  --shadow:rgba(0,0,0,.10);
 }
+
+*{ font-family:'Tajawal',system-ui,-apple-system,'Segoe UI',sans-serif !important; }
 
 .gradio-container{
-  background: var(--bg) !important;
+  background: linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%) !important;
 }
 
-/* Center login card */
+/* LOGIN */
 #login_screen{
   min-height: 100vh;
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
+  padding: 18px;
 }
-
 #login_card{
-  width: min(760px, 92vw);
+  width: min(520px, 94vw);
   background: var(--card) !important;
-  border-radius: 44px !important;
-  padding: 56px 56px 44px 56px !important;
-  box-shadow: 0 22px 70px rgba(0,0,0,0.12) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 22px !important;
+  padding: 38px 34px !important;
+  box-shadow: 0 18px 55px rgba(0,0,0,.12) !important;
 }
-
-/* Title */
-#login_title{
-  color: var(--text) !important;
-  text-align: center;
-  font-size: 44px;
-  font-weight: 900;
-  margin-bottom: 34px;
-}
-
-/* Make all texts black */
-#login_card, #login_card *{
-  color: var(--text) !important;
-}
-
-/* Remove any dark panels around form groups */
-#login_card .gr-form, 
-#login_card .gr-box, 
-#login_card .block, 
-#login_card .wrap, 
-#login_card .gr-panel,
-#login_card .gr-group{
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Labels */
-.gr-textbox label{
-  color: var(--text) !important;
+#login_title{ text-align:center; font-size:34px; font-weight:900; color:var(--text) !important; margin:0 0 8px 0; }
+#login_subtitle{ text-align:center; color:var(--muted) !important; margin:0 0 20px 0; }
+#login_btn{
+  background: linear-gradient(135deg,var(--primary) 0%,var(--primary2) 100%) !important;
+  color:#fff !important;
+  border:none !important;
+  border-radius: 14px !important;
+  height: 50px !important;
   font-weight: 800 !important;
+}
+#login_error{ color:#EF4444 !important; font-weight:700; }
+
+/* CHAT PAGE */
+#page_wrap{
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 12px 18px 18px 18px;
+}
+
+/* Header صغير مناسب للابتوب */
+#chat_header{
+  background: linear-gradient(135deg,var(--primary) 0%,var(--primary2) 100%) !important;
+  border-radius: 18px !important;
+  padding: 16px 18px !important;
+  color:#fff !important;
+  box-shadow: 0 10px 26px rgba(0,0,0,.14) !important;
+  margin-bottom: 10px !important;
+}
+#chat_header h1{ margin:0; font-size:28px; font-weight:900; }
+#chat_header p{ margin:6px 0 0 0; opacity:.95; font-size:14px; }
+
+/* Panels */
+.panel{
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 6px 18px var(--shadow) !important;
+  padding: 14px !important;
+}
+
+/* Chatbot: ارتفاع مناسب للابتوب */
+#chatbot_box{
+  height: 62vh;              /* ✅ يخلي الشاشة ما تحتاج سكرول كثير */
+  min-height: 420px;
+  border-radius: 18px !important;
+  overflow: auto;
 }
 
 /* Inputs */
-.gradio-container input,
-.gradio-container textarea{
-  background: var(--input-bg) !important;
-  border: 1px solid var(--input-border) !important;
+#send_btn{
+  background: linear-gradient(135deg,var(--primary) 0%,var(--primary2) 100%) !important;
+  color:#fff !important;
+  border:none !important;
   border-radius: 14px !important;
-  color: var(--text) !important;
+  height: 48px !important;
+  font-weight:800 !important;
 }
-
-/* Login button */
-#login_btn{
-  background: var(--btn-bg) !important;
-  color: var(--btn-text) !important;
-  border: 1px solid rgba(0,0,0,0.10) !important;
+#clear_btn{
   border-radius: 14px !important;
-  height: 52px !important;
-  font-weight: 900 !important;
-  font-size: 16px !important;
+  height: 44px !important;
 }
 
-#login_btn:hover{
-  filter: brightness(0.98);
+.example-btn{
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  min-height: 46px !important;
+  font-weight:700 !important;
 }
 
-#login_error{
-  margin-top: 12px;
-  font-weight: 800;
-  color: #B91C1C !important;
-  text-align: center;
-}
+/* bot text black */
+.gradio-chatbot .bot, .gradio-chatbot .bot * { color:#000 !important; }
 
-#login_hint{
-  margin-top: 18px;
-  text-align: center;
-  color: #111827 !important;
-  opacity: 0.9;
-}
-
-/* hide footer */
 footer{ display:none !important; }
 """
 
@@ -306,69 +345,85 @@ footer{ display:none !important; }
 # UI
 # ============================================================
 def create_gradio_interface(chatbot: SFDAChatbot) -> gr.Blocks:
-    # CSS in Blocks (works with many versions). Fallback if unsupported.
-    try:
-        demo = gr.Blocks(title="SANAD Chatbot", css=CSS_CODE)
-    except TypeError:
-        demo = gr.Blocks(title="SANAD Chatbot")
+    demo = gr.Blocks(title="SANAD Chatbot", css=CSS_CODE)
 
     with demo:
         is_logged_in = gr.State(False)
 
         # -----------------------------
-        # LOGIN VIEW (✅ centered)
+        # LOGIN VIEW
         # -----------------------------
         with gr.Column(visible=True, elem_id="login_screen") as login_view:
             with gr.Column(elem_id="login_card"):
-                gr.Markdown("## اهلا بك في سند", elem_id="login_title")
+                gr.Markdown("# سَنَد", elem_id="login_title")
+                gr.Markdown("المساعد الذكي للوائح التجميل", elem_id="login_subtitle")
 
-                username = gr.Textbox(label="اسم المستخدم", placeholder="مثال: admin")
-                password = gr.Textbox(label="كلمة السر", placeholder="••••••••", type="password")
+                username = gr.Textbox(label="اسم المستخدم", placeholder="أدخل اسم المستخدم")
+                password = gr.Textbox(label="كلمة المرور", placeholder="••••••••", type="password")
 
                 login_btn = gr.Button("تسجيل الدخول", elem_id="login_btn")
                 login_error = gr.Markdown("", elem_id="login_error")
-                gr.Markdown("اكتب بياناتك ثم اضغط تسجيل الدخول", elem_id="login_hint")
 
         # -----------------------------
         # CHAT VIEW
         # -----------------------------
         with gr.Column(visible=False) as chat_view:
-            gr.Markdown("## 🇸🇦 SANAD - المساعد الذكي للوائح التجميل")
+            with gr.Column(elem_id="page_wrap"):
+                with gr.Column(elem_id="chat_header"):
+                    gr.HTML("<h1>🇸🇦 سَنَد - SANAD</h1><p>المساعد الذكي ت</p>")
 
-            source_choices = gr.CheckboxGroup(
-                choices=["لوائح التجميل (PDF)", "محظورات التجميل", "الأسس (GDP)"],
-                value=["لوائح التجميل (PDF)"],
-                label="🔍 مصادر البحث",
-            )
+                with gr.Row():
+                    # Sidebar
+                    with gr.Column(scale=1):
+                        with gr.Column(elem_classes=["panel"]):
+                            gr.Markdown("### 🔍 مصادر البحث")
+                            source_choices = gr.CheckboxGroup(
+                                choices=["لوائح التجميل (PDF)", "محظورات التجميل", "الأسس (GDP)"],
+                                value=["لوائح التجميل (PDF)"],
+                                label="",
+                                interactive=True,
+                                show_label=False,
+                            )
 
-            # IMPORTANT: no type="messages" to stay compatible
-            chatbot_ui = gr.Chatbot(label="المحادثة", height=550)
+                        with gr.Column(elem_classes=["panel"]):
+                            gr.Markdown("### ✨ أمثلة جاهزة")
+                            examples = [
+                                "ما هي اشتراطات تخزين منتجات التجميل؟",
+                                "اذكر مسؤوليات المصنع حسب اللوائح.",
+                                "ماذا تقول المادة 20؟",
+                                "هل توجد مواد محظورة في مستحضرات التجميل؟",
+                                "ما متطلبات GDP للتوزيع والتخزين؟",
+                            ]
+                            ex1 = gr.Button(examples[0], elem_classes=["example-btn"])
+                            ex2 = gr.Button(examples[1], elem_classes=["example-btn"])
+                            ex3 = gr.Button(examples[2], elem_classes=["example-btn"])
+                            ex4 = gr.Button(examples[3], elem_classes=["example-btn"])
+                            ex5 = gr.Button(examples[4], elem_classes=["example-btn"])
 
-            gr.Markdown("### ✨ أمثلة جاهزة")
-            examples = [
-                "ما هي اشتراطات تخزين منتجات التجميل؟",
-                "اذكر مسؤوليات المصنع حسب اللوائح.",
-                "ماذا تقول المادة 20؟",
-                "هل توجد مواد محظورة؟",
-                "ما متطلبات GDP؟",
-            ]
+                    # Main
+                    with gr.Column(scale=3):
+                        with gr.Column(elem_classes=["panel"]):
+                            chatbot_ui = gr.Chatbot(
+                                show_label=False,
+                                elem_id="chatbot_box",
+                                rtl=True,
+                            )
 
-            with gr.Row():
-                ex1 = gr.Button(examples[0])
-                ex2 = gr.Button(examples[1])
-                ex3 = gr.Button(examples[2])
-            with gr.Row():
-                ex4 = gr.Button(examples[3])
-                ex5 = gr.Button(examples[4])
+                        with gr.Column(elem_classes=["panel"]):
+                            with gr.Row():
+                                msg = gr.Textbox(
+                                    placeholder="اكتب سؤالك هنا...",
+                                    scale=4,
+                                    show_label=False,
+                                    container=False,
+                                    rtl=True,
+                                )
+                                send = gr.Button("إرسال", variant="primary", scale=1, elem_id="send_btn")
 
-            with gr.Row():
-                msg = gr.Textbox(placeholder="اكتب سؤالك هنا...", scale=4)
-                send = gr.Button("إرسال", variant="primary", scale=1)
-
-            clear = gr.Button("مسح المحادثة")
+                            clear = gr.Button("🗑️ مسح المحادثة", elem_id="clear_btn")
 
         # -----------------------------
-        # Login Logic (✅ fixed password issue)
+        # Login Logic
         # -----------------------------
         def do_login(u, p):
             expected_u = str(getattr(config, "UI_USERNAME", "admin")).strip()
@@ -378,28 +433,24 @@ def create_gradio_interface(chatbot: SFDAChatbot) -> gr.Blocks:
             p = (p or "").strip()
 
             if not u or not p:
-                return False, gr.update(visible=True), gr.update(visible=False), "❌ فضلاً أدخل اسم المستخدم وكلمة السر."
+                return False, gr.update(visible=True), gr.update(visible=False), "❌ فضلاً أدخل اسم المستخدم وكلمة المرور."
 
             if u == expected_u and p == expected_p:
                 return True, gr.update(visible=False), gr.update(visible=True), ""
 
-            return False, gr.update(visible=True), gr.update(visible=False), "❌ اسم المستخدم أو كلمة السر غير صحيحة."
+            return False, gr.update(visible=True), gr.update(visible=False), "❌ اسم المستخدم أو كلمة المرور غير صحيحة."
 
         login_btn.click(do_login, [username, password], [is_logged_in, login_view, chat_view, login_error])
         password.submit(do_login, [username, password], [is_logged_in, login_view, chat_view, login_error])
 
-        # -----------------------------
         # Examples -> Fill textbox
-        # -----------------------------
-        ex1.click(lambda: examples[0], None, msg)
-        ex2.click(lambda: examples[1], None, msg)
-        ex3.click(lambda: examples[2], None, msg)
-        ex4.click(lambda: examples[3], None, msg)
-        ex5.click(lambda: examples[4], None, msg)
+        ex1.click(lambda: examples[0], None, msg, queue=False)
+        ex2.click(lambda: examples[1], None, msg, queue=False)
+        ex3.click(lambda: examples[2], None, msg, queue=False)
+        ex4.click(lambda: examples[3], None, msg, queue=False)
+        ex5.click(lambda: examples[4], None, msg, queue=False)
 
-        # -----------------------------
-        # Chat callbacks (messages dict format)
-        # -----------------------------
+        # Chat callbacks
         def user_msg(user_message, history):
             if not user_message:
                 return history, ""
@@ -407,43 +458,39 @@ def create_gradio_interface(chatbot: SFDAChatbot) -> gr.Blocks:
             history.append({"role": "user", "content": user_message})
             return history, ""
 
-        def bot_msg(history, sources):
+        def bot_msg(history, selected_sources):
             if not history:
                 return history
             last_user = history[-1]["content"]
             history.append({"role": "assistant", "content": ""})
-
-            for chunk in chatbot.stream_response_core(last_user, sources):
+            for chunk in chatbot.stream_response_core(last_user, selected_sources or []):
                 history[-1]["content"] = chunk
                 yield history
 
-        msg.submit(user_msg, [msg, chatbot_ui], [chatbot_ui, msg]).then(
+        msg.submit(user_msg, [msg, chatbot_ui], [chatbot_ui, msg], queue=False).then(
             bot_msg, [chatbot_ui, source_choices], chatbot_ui
         )
-        send.click(user_msg, [msg, chatbot_ui], [chatbot_ui, msg]).then(
+        send.click(user_msg, [msg, chatbot_ui], [chatbot_ui, msg], queue=False).then(
             bot_msg, [chatbot_ui, source_choices], chatbot_ui
         )
-        clear.click(lambda: [], None, chatbot_ui)
+        clear.click(lambda: [], None, chatbot_ui, queue=False)
 
     return demo
 
 
-# ============================================================
-# app.py imports: from src.ui_gradio import main
-# ============================================================
 def main():
     bot = SFDAChatbot()
     ui = create_gradio_interface(bot)
 
-    # Host/Port configurable (optional)
     host = str(getattr(config, "UI_HOST", "127.0.0.1")).strip()
     port = int(getattr(config, "UI_PORT", 7860))
 
-    # Some versions don't support show_error
-    try:
-        ui.queue().launch(server_name=host, server_port=port, show_error=True)
-    except TypeError:
-        ui.queue().launch(server_name=host, server_port=port)
+    ui.queue().launch(
+        server_name=host,
+        server_port=port,
+        show_error=True,
+        share=False,
+    )
 
 
 if __name__ == "__main__":
